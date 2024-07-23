@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Market Data</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Stock Market Data</h1>
+        <div class="form-group">
+            <label for="symbol">Stock Symbol:</label>
+            <input type="text" id="symbol" class="form-control" placeholder="Enter stock symbol">
+        </div>
+        <div class="form-group">
+            <label for="period">Period:</label>
+            <select id="period" class="form-control">
+                <option value="1d">1 Day</option>
+                <option value="5d">5 Days</option>
+                <option value="1mo" selected>1 Month</option>
+                <option value="6mo">6 Months</option>
+                <option value="1y">1 Year</option>
+                <option value="5y">5 Years</option>
+            </select>
+        </div>
+        <button id="fetchData" class="btn btn-primary">Fetch Data</button>
+        <div id="stockData" class="mt-5">
+            <canvas id="stockChart"></canvas>
+            <div id="stockStats" class="mt-5">
+                <h3>Stock Statistics</h3>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Current Price: <span id="currentPrice"></span></p>
+                        <p>Market Cap: <span id="marketCap"></span></p>
+                        <p>Trailing P/E: <span id="trailingPERatio"></span></p>
+                        <p>Forward P/E: <span id="forwardPERatio"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>Dividend Yield: <span id="dividendYield"></span></p>
+                        <p>52 Week High: <span id="fiftyTwoWeekHigh"></span></p>
+                        <p>52 Week Low: <span id="fiftyTwoWeekLow"></span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+</body>
+</html>
