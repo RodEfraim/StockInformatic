@@ -1,10 +1,17 @@
 from flask import Flask, render_template, jsonify, request
 import yfinance as yf
-import pandas as pd
+import numpy as np
 import logging
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.DEBUG)
+
+
+# Helper function to replace NaN values
+def safe_value(value):
+    if isinstance(value, (int, float)) and np.isnan(value):
+        return 'N/A'
+    return value if value is not None else 'N/A'
 
 
 def fetch_stock_data(symbol, period):
@@ -19,33 +26,42 @@ def fetch_stock_data(symbol, period):
         data.reset_index(inplace=True)
         data['Date'] = data['Date'].astype(str)
 
-        # trailing pe ratio = current share price / earnings per share over past 12 months.
+        # trailing pe ratio = current share price / earnings-per-share (EPS) over the past 12 months.
+        # aka
+        # trailing pe ratio = current share price / 12-month trailing EPS
+
+        # forward pe ratio = current share price / earnings-per-share (EPS) over the projected next 12 months.
+        # aka
+        # forward pe ratio = current share price / 12-month forward EPS estimate
         # https://seekingalpha.com/article/4430117-trailing-vs-forward-pe-ratio has good info on PE ratios.
         stock_info = {
-            "current_price": stock.info.get('currentPrice', 'N/A'),
-            "market_cap": stock.info.get('marketCap', 'N/A'),
-            "trailing_pe_ratio": stock.info.get('trailingPE', 'N/A'),
-            "forward_pe_ratio": stock.info.get('forwardPE', 'N/A'),
-            "dividend_yield": stock.info.get('dividendYield', 'N/A'),
-            "52_week_high": stock.info.get('fiftyTwoWeekHigh', 'N/A'),
-            "52_week_low": stock.info.get('fiftyTwoWeekLow', 'N/A'),
+            "current_price": safe_value(stock.info.get('currentPrice')),
+            "market_cap": safe_value(stock.info.get('marketCap')),
+            "pe_ratio": safe_value(stock.info.get('forwardPE')),
+            "trailing_pe_ratio": safe_value(stock.info.get('trailingPE')),
+            "forward_pe_ratio": safe_value(stock.info.get('forwardPE')),
+            "dividend_yield": safe_value(stock.info.get('dividendYield')),
+            "52_week_high": safe_value(stock.info.get('fiftyTwoWeekHigh')),
+            "52_week_low": safe_value(stock.info.get('fiftyTwoWeekLow')),
         }
 
-        # Fetch quarterly income statements
-        # TODO: It seems like it does let us fetch more than 5 quarterly results...
+        # TODO: It seems like it does not let us fetch more than 5 quarterly results...
         # Yahoo Finance generally provides the past 4 years of reported annual
         # data and the last 5 quarters of quarterly data...
 
-        # TODO: Make a column graph: https://blog.hubspot.com/marketing/types-of-graphs-for-data-visualization
+        # Fetch quarterly income statements
         quarterly_income_statements = stock.quarterly_financials.T.head(5)
         quarterly_data = []
         for index, row in quarterly_income_statements.iterrows():
+            logging.debug("index.strftime('%Y-%m-%d'): " + index.strftime('%Y-%m-%d'))
+
             quarterly_data.append({
                 "date": index.strftime('%Y-%m-%d'),
-                "revenue": row.get('Total Revenue', 'N/A'),
-                "net_income": row.get('Net Income', 'N/A'),
-                "diluted_eps": row.get('Diluted EPS', 'N/A'),
-                "net_profit_margin": row.get('Net Profit Margin', 'N/A')
+                "revenue": safe_value(row.get('Total Revenue')),
+                "net_income": safe_value(row.get('Net Income')),
+                "diluted_eps": safe_value(row.get('Diluted EPS')),
+                "basic_eps": safe_value(row.get('Basic EPS')),  # Assuming Basic EPS is available
+                "net_profit_margin": safe_value(row.get('Net Profit Margin'))
             })
 
         # Fetch annual income statements
@@ -54,10 +70,11 @@ def fetch_stock_data(symbol, period):
         for index, row in annual_income_statements.iterrows():
             annual_data.append({
                 "date": index.strftime('%Y-%m-%d'),
-                "revenue": row.get('Total Revenue', 'N/A'),
-                "net_income": row.get('Net Income', 'N/A'),
-                "diluted_eps": row.get('Diluted EPS', 'N/A'),
-                "net_profit_margin": row.get('Net Profit Margin', 'N/A')
+                "revenue": safe_value(row.get('Total Revenue')),
+                "net_income": safe_value(row.get('Net Income')),
+                "diluted_eps": safe_value(row.get('Diluted EPS')),
+                "basic_eps": safe_value(row.get('Basic EPS')),  # Assuming Basic EPS is available
+                "net_profit_margin": safe_value(row.get('Net Profit Margin'))
             })
 
         return stock_info, data.to_dict(orient='records'), quarterly_data, annual_data

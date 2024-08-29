@@ -1,3 +1,10 @@
+// Helper function to handle NaN, undefined, or null values
+function safeValue(value) {
+    console.log("You have entered the safeValue function.");
+    console.log("value: " + value);
+    return (value === undefined || value === null || isNaN(value)) ? 'N/A' : value;
+}
+
 document.getElementById('fetchData').addEventListener('click', function() {
     const symbol = document.getElementById('symbol').value;
     const period = document.getElementById('period').value;
@@ -26,6 +33,10 @@ document.getElementById('fetchData').addEventListener('click', function() {
             const prices = data.map(entry => entry.Close);
 
             const ctx = document.getElementById('stockChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+            gradient.addColorStop(0, 'rgba(144, 238, 144, 0.4)'); // Light green color at the top (40% opacity)
+            gradient.addColorStop(1, 'rgba(144, 238, 144, 0)');   // Transparent at the bottom
+
             if (window.stockChart instanceof Chart) {
                 console.log('Destroying existing chart instance');
                 window.stockChart.destroy();
@@ -41,8 +52,10 @@ document.getElementById('fetchData').addEventListener('click', function() {
                         label: `${symbol} Stock Price`,
                         data: prices,
                         borderColor: 'rgba(75, 192, 192, 1)',
-                        borderWidth: 1,
-                        fill: false
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
                     }]
                 },
                 options: {
@@ -56,42 +69,155 @@ document.getElementById('fetchData').addEventListener('click', function() {
             console.log('New chart instance created:', window.stockChart);
 
             // Update stock statistics
-            document.getElementById('currentPrice').textContent = stock_info.current_price;
+            //document.getElementById('currentPrice').textContent = stock_info.current_price;
+            document.getElementById('currentPrice').textContent = `$${stock_info.current_price}`;
+
             document.getElementById('marketCap').textContent = stock_info.market_cap;
             document.getElementById('trailingPERatio').textContent = stock_info.trailing_pe_ratio;
             document.getElementById('forwardPERatio').textContent = stock_info.forward_pe_ratio;
-            document.getElementById('dividendYield').textContent = stock_info.dividend_yield;
+
+            // Convert dividend yield to percentage and display it
+            if(stock_info.dividend_yield != 'N/A'){
+                const dividendYield = parseFloat(stock_info.dividend_yield) * 100;
+                document.getElementById('dividendYield').textContent = `${dividendYield.toFixed(2)}%`;
+            }else{
+                document.getElementById('dividendYield').textContent = stock_info.dividend_yield;
+            }
+
             document.getElementById('fiftyTwoWeekHigh').textContent = stock_info['52_week_high'];
             document.getElementById('fiftyTwoWeekLow').textContent = stock_info['52_week_low'];
+
+            /*document.getElementById('currentPrice').textContent = safeValue(stock_info.current_price);
+            document.getElementById('marketCap').textContent = safeValue(stock_info.market_cap);
+            document.getElementById('peRatio').textContent = safeValue(stock_info.pe_ratio);
+            document.getElementById('dividendYield').textContent = safeValue(stock_info.dividend_yield);
+            document.getElementById('fiftyTwoWeekHigh').textContent = safeValue(stock_info['52_week_high']);
+            document.getElementById('fiftyTwoWeekLow').textContent = safeValue(stock_info['52_week_low']);*/
 
             // Update quarterly income statements
             const quarterlyDataBody = document.getElementById('quarterlyDataBody');
             quarterlyDataBody.innerHTML = '';
+            const quarterlyLabels = [];
+            const quarterlyRevenues = [];
+            const quarterlyNetIncomes = [];
+
             quarterly_data.forEach(q => {
+                quarterlyLabels.unshift(q.date);
+                quarterlyRevenues.unshift(q.revenue);
+                quarterlyNetIncomes.unshift(q.net_income);
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${q.date}</td>
-                    <td>${q.revenue}</td>
-                    <td>${q.net_income}</td>
-                    <td>${q.diluted_eps}</td>
-                    <td>${q.net_profit_margin}</td>
+                    <td>${safeValue(q.revenue)}</td>
+                    <td>${safeValue(q.net_income)}</td>
+                    <td>${safeValue(q.diluted_eps)}</td>
+                    <td>${safeValue(q.basic_eps)}</td>
+                    <td>${safeValue(q.net_profit_margin)}</td>
                 `;
                 quarterlyDataBody.appendChild(row);
             });
 
+
             // Update annual income statements
             const annualDataBody = document.getElementById('annualDataBody');
             annualDataBody.innerHTML = '';
+            const annualLabels = [];
+            const annualRevenues = [];
+            const annualNetIncomes = [];
+
             annual_data.forEach(a => {
+                annualLabels.unshift(a.date);
+                annualRevenues.unshift(a.revenue);
+                annualNetIncomes.unshift(a.net_income);
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${a.date}</td>
-                    <td>${a.revenue}</td>
-                    <td>${a.net_income}</td>
-                    <td>${a.diluted_eps}</td>
-                    <td>${a.net_profit_margin}</td>
+                    <td>${safeValue(a.revenue)}</td>
+                    <td>${safeValue(a.net_income)}</td>
+                    <td>${safeValue(a.diluted_eps)}</td>
+                    <td>${safeValue(a.basic_eps)}</td>
+                    <td>${safeValue(a.net_profit_margin)}</td>
                 `;
                 annualDataBody.appendChild(row);
+            });
+
+
+            // Create Column Chart for Quarterly Data
+            const ctxQuarterly = document.getElementById('quarterlyChart').getContext('2d');
+            if (window.quarterlyChart instanceof Chart) {
+                window.quarterlyChart.destroy();
+            }
+            window.quarterlyChart = new Chart(ctxQuarterly, {
+                type: 'bar',
+                data: {
+                    labels: quarterlyLabels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: quarterlyRevenues,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Net Income',
+                            data: quarterlyNetIncomes,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: { beginAtZero: true },
+                        y: { beginAtZero: true }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+
+            // Create Column Chart for Annual Data
+            const ctxAnnual = document.getElementById('annualChart').getContext('2d');
+            if (window.annualChart instanceof Chart) {
+                window.annualChart.destroy();
+            }
+            window.annualChart = new Chart(ctxAnnual, {
+                type: 'bar',
+                data: {
+                    labels: annualLabels,
+                    datasets: [
+                        {
+                            label: 'Revenue',
+                            data: annualRevenues,
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Net Income',
+                            data: annualNetIncomes,
+                            backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
             });
         })
         .catch(error => {

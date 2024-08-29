@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Market Data</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
@@ -48,6 +48,8 @@
             </div>
             <div id="quarterlyIncome" class="mt-5">
                 <h3>Quarterly Income Statements (Last 5 Quarters)</h3>
+                <!-- New Canvas for the Column Chart -->
+                <canvas id="quarterlyChart"></canvas>
                 <table class="table table-striped">
                     <thead>
                     <tr>
@@ -55,6 +57,7 @@
                         <th>Revenue</th>
                         <th>Net Income</th>
                         <th>Diluted EPS</th>
+                        <th>Basic EPS</th>
                         <th>Net Profit Margin</th>
                     </tr>
                     </thead>
@@ -63,6 +66,7 @@
             </div>
             <div id="annualIncome" class="mt-5">
                 <h3>Annual Income Statements (Last 4 Years)</h3>
+                <canvas id="annualChart"></canvas>
                 <table class="table table-striped">
                     <thead>
                     <tr>
@@ -70,6 +74,7 @@
                         <th>Revenue</th>
                         <th>Net Income</th>
                         <th>Diluted EPS</th>
+                        <th>Basic EPS</th>
                         <th>Net Profit Margin</th>
                     </tr>
                     </thead>
