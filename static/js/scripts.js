@@ -32,10 +32,25 @@ document.getElementById('fetchData').addEventListener('click', function() {
             const labels = data.map(entry => entry.Date);
             const prices = data.map(entry => entry.Close);
 
+            // Determine the background color based on the price trend
+            const firstPrice = prices[0];
+            const lastPrice = prices[prices.length - 1];
+
             const ctx = document.getElementById('stockChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
-            gradient.addColorStop(0, 'rgba(144, 238, 144, 0.4)'); // Light green color at the top (40% opacity)
-            gradient.addColorStop(1, 'rgba(144, 238, 144, 0)');   // Transparent at the bottom
+            let borderColor;
+
+            if (firstPrice <= lastPrice) {
+                // Green gradient if the price increased or stayed the same
+                gradient.addColorStop(0, 'rgba(144, 238, 144, 0.4)'); // Light green color at the top (40% opacity)
+                gradient.addColorStop(1, 'rgba(144, 238, 144, 0)');   // Transparent at the bottom
+                borderColor = 'rgba(34, 139, 34, 1)'; // Darker green border
+            } else {
+                // Red gradient if the price decreased
+                gradient.addColorStop(0, 'rgba(255, 99, 132, 0.4)');  // Light red color at the top (40% opacity)
+                gradient.addColorStop(1, 'rgba(255, 99, 132, 0)');    // Transparent at the bottom
+                borderColor = 'rgba(255, 0, 0, 1)'; // Red border
+            }
 
             if (window.stockChart instanceof Chart) {
                 console.log('Destroying existing chart instance');
@@ -51,8 +66,8 @@ document.getElementById('fetchData').addEventListener('click', function() {
                     datasets: [{
                         label: `${symbol} Stock Price`,
                         data: prices,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: gradient,
+                        borderColor: borderColor, // Dynamic border color
+                        backgroundColor: gradient, // Dynamic background color
                         borderWidth: 2,
                         fill: true,
                         tension: 0.1
@@ -69,9 +84,7 @@ document.getElementById('fetchData').addEventListener('click', function() {
             console.log('New chart instance created:', window.stockChart);
 
             // Update stock statistics
-            //document.getElementById('currentPrice').textContent = stock_info.current_price;
             document.getElementById('currentPrice').textContent = `$${stock_info.current_price}`;
-
             document.getElementById('marketCap').textContent = stock_info.market_cap;
             document.getElementById('trailingPERatio').textContent = stock_info.trailing_pe_ratio;
             document.getElementById('forwardPERatio').textContent = stock_info.forward_pe_ratio;
